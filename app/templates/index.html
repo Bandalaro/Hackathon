@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Booking System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .screen {
+            background: #e2e8f0;
+            height: 5px;
+            border-radius: 5px;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .screen::after {
+            content: 'SCREEN';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #718096;
+            font-size: 0.875rem;
+        }
+
+        .seats-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 10px;
+            margin: 2rem 0;
+        }
+
+        .seat {
+            aspect-ratio: 1;
+            background: #cbd5e0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .seat:hover {
+            transform: scale(1.1);
+        }
+
+        .seat.selected {
+            background: #4c51bf;
+        }
+
+        .seat.reserved {
+            background: #e53e3e;
+            cursor: not-allowed;
+        }
+
+        .seat::after {
+            content: attr(data-seat);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #2d3748;
+            font-size: 0.75rem;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .available { background: #cbd5e0; }
+        .selected { background: #4c51bf; }
+        .reserved { background: #e53e3e; }
+
+        .booking-info {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .selected-seats {
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+
+        .book-button {
+            background: #4c51bf;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .book-button:hover {
+            background: #434190;
+        }
+
+        .book-button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            background: #2d3748;
+            color: white;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .seats-container {
+                grid-template-columns: repeat(5, 1fr);
+            }
+
+            .legend {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Movie Ticket Booking</h1>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color available"></div>
+                <span>Available</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color selected"></div>
+                <span>Selected</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color reserved"></div>
+                <span>Reserved</span>
+            </div>
+        </div>
+
+        <div class="screen"></div>
+        <div class="seats-container" id="seatsContainer"></div>
+
+        <div class="booking-info">
+            <p class="selected-seats">Selected Seats: <span id="selectedSeatsText">None</span></p>
+            <button class="book-button" id="bookButton" disabled>Book Selected Seats</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const seatsContainer = document.getElementById('seatsContainer');
+        const selectedSeatsText = document.getElementById('selectedSeatsText');
+        const bookButton = document.getElementById('bookButton');
+        const toast = document.getElementById('toast');
+
+        let selectedSeats = new Set();
+        let seatStates = {};
+
+        // Show toast message
+        function showToast(message, duration = 3000) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+
+        // Update selected seats display
+        function updateSelectedSeats() {
+            if (selectedSeats.size === 0) {
+                selectedSeatsText.textContent = 'None';
+                bookButton.disabled = true;
+            } else {
+                selectedSeatsText.textContent = Array.from(selectedSeats).join(', ');
+                bookButton.disabled = false;
+            }
+        }
+
+        // Handle seat click
+        function handleSeatClick(seat) {
+            const seatNumber = parseInt(seat.dataset.seat);
+            
+            if (seatStates[seatNumber].is_reserved) {
+                showToast('This seat is already reserved');
+                return;
+            }
+
+            if (selectedSeats.has(seatNumber)) {
+                selectedSeats.delete(seatNumber);
+                seat.classList.remove('selected');
+            } else {
+                selectedSeats.add(seatNumber);
+                seat.classList.add('selected');
+            }
+
+            updateSelectedSeats();
+        }
+
+        // Create seats
+        function createSeats() {
+            for (let i = 1; i <= 50; i++) {
+                const seat = document.createElement('button');
+                seat.className = 'seat';
+                seat.dataset.seat = i;
+                seat.addEventListener('click', () => handleSeatClick(seat));
+                seatsContainer.appendChild(seat);
+            }
+        }
+
+        // Fetch and update seats
+        async function fetchSeats() {
+            try {
+                const response = await fetch('/api/seats');
+                const seats = await response.json();
+                
+                seats.forEach(seat => {
+                    seatStates[seat.seat_number] = seat;
+                    const seatElement = document.querySelector(`[data-seat="${seat.seat_number}"]`);
+                    
+                    if (seat.is_reserved) {
+                        seatElement.classList.add('reserved');
+                        if (selectedSeats.has(seat.seat_number)) {
+                            selectedSeats.delete(seat.seat_number);
+                            seatElement.classList.remove('selected');
+                            updateSelectedSeats();
+                        }
+                    } else {
+                        seatElement.classList.remove('reserved');
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching seats:', error);
+                showToast('Error loading seats. Please try again.');
+            }
+        }
+
+        // Book selected seats
+        async function bookSelectedSeats() {
+            for (const seatNumber of selectedSeats) {
+                try {
+                    const response = await fetch('/api/book_seat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ seat_number: seatNumber }),
+                    });
+
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        showToast(`Seat ${seatNumber} booked successfully!`);
+                    } else {
+                        showToast(result.message);
+                    }
+                } catch (error) {
+                    console.error('Error booking seat:', error);
+                    showToast(`Error booking seat ${seatNumber}`);
+                }
+            }
+
+            selectedSeats.clear();
+            updateSelectedSeats();
+            fetchSeats();
+        }
+
+        // Initialize
+        createSeats();
+        fetchSeats();
+        setInterval(fetchSeats, 5000); // Refresh seats every 5 seconds
+
+        // Add event listener to book button
+        bookButton.addEventListener('click', bookSelectedSeats);
+    </script>
+</body>
+</html>

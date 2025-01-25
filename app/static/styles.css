@@ -1,0 +1,98 @@
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body Styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Main container */
+.container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 80%;
+    max-width: 800px;
+}
+
+/* Header */
+header h1 {
+    font-size: 2.5em;
+    color: #333;
+}
+
+header p {
+    color: #777;
+    margin-bottom: 20px;
+}
+
+/* Seat Container */
+.seat-container {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.seat {
+    width: 50px;
+    height: 50px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.seat.reserved {
+    background-color: #ff6347; /* Tomato red for reserved seats */
+}
+
+.seat.available:hover {
+    background-color: #3cb371; /* Green on hover for available seats */
+}
+
+/* Action Buttons */
+.actions {
+    margin-top: 20px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 1em;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#bookButton {
+    background-color: #4caf50;
+    color: white;
+}
+
+#cancelButton {
+    background-color: #f44336;
+    color: white;
+}
+
+/* Status Message */
+.status {
+    margin-top: 20px;
+}
+
+#statusMessage {
+    font-size: 1.2em;
+    color: #333;
+    font-weight: bold;
+}

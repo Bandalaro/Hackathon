@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Tickets</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a103c 0%, #2c1810 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 2rem;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .movie-info {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .ticket-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .ticket-number {
+            font-size: 2rem;
+            min-width: 3ch;
+            text-align: center;
+        }
+
+        .ticket-btn {
+            background: #ffd700;
+            color: #1a103c;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: transform 0.2s ease;
+        }
+
+        .ticket-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .ticket-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .price-info {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+        }
+
+        .continue-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: #ffd700;
+            color: #1a103c;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .continue-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .continue-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Select Tickets</h1>
+        <div class="movie-info">
+            <h2>{{ movie['title'] }}</h2>
+            <p>{{ movie['duration'] }}</p>
+        </div>
+        
+        <div class="ticket-selector">
+            <button class="ticket-btn" onclick="updateTickets(-1)" id="decreaseBtn">-</button>
+            <span class="ticket-number" id="ticketCount">1</span>
+            <button class="ticket-btn" onclick="updateTickets(1)">+</button>
+        </div>
+
+        <div class="price-info">
+            Total: $<span id="totalPrice">{{ movie['price'] }}</span>
+        </div>
+
+        <button class="continue-btn" onclick="continueToBooking()">Continue</button>
+    </div>
+
+    <script>
+        const moviePrice = {{ movie['price']}};
+        let ticketCount = 1;
+        
+        function updateTickets(change) {
+            const newCount = ticketCount + change;
+            if (newCount >= 1 && newCount <= 10) {
+                ticketCount = newCount;
+                document.getElementById('ticketCount').textContent = ticketCount;
+                document.getElementById('totalPrice').textContent = (moviePrice * ticketCount).toFixed(2);
+                document.getElementById('decreaseBtn').disabled = ticketCount === 1;
+            }
+        }
+
+        function continueToBooking() {
+            window.location.href = `/booking/{{ movie['id'] }}?tickets=${ticketCount}`;
+        }
+
+        // Initialize decrease button state
+        document.getElementById('decreaseBtn').disabled = ticketCount === 1;
+    </script>
+</body>
+</html>
